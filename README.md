@@ -148,6 +148,14 @@ IMPORTANT: This feature is very much *experimental*. Currently, the insertion
     paragraph is discarded. In the near future this feature will most likely be
     implemented on top of HTML insertion.
 
+##### Images [experimental]
+
+Add images to a document, the images data will be attach in the document.
+
+For an example see the test file: "image_test.rb"
+
+This funcionality was inspired in the kubido fork for this project - kubido/sablon
+
 ##### HTML [experimental]
 
 Similar to WordProcessingML it's possible to use html as input while processing the
