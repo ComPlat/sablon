@@ -99,10 +99,14 @@ XML
     end
 
     class TextFormat
-      def initialize(bold, italic, underline)
+      def initialize(bold, italic, underline, subscript, superscript, color, highlight)
         @bold = bold
         @italic = italic
         @underline = underline
+        @subscript = subscript
+        @superscript = superscript
+        @color = color
+        @highlight = highlight
       end
 
       def inspect
@@ -110,6 +114,10 @@ XML
         parts << 'bold' if @bold
         parts << 'italic' if @italic
         parts << 'underline' if @underline
+        parts << 'subscript' if @subscript
+        parts << 'superscript' if @superscript
+        parts << "color #{@color}" if @color
+        parts << "highlight #{@highlight}" if @highlight
         parts.join('|')
       end
 
@@ -118,6 +126,10 @@ XML
         styles << '<w:b />' if @bold
         styles << '<w:i />' if @italic
         styles << '<w:u w:val="single"/>' if @underline
+        styles << '<w:vertAlign w:val="subscript" />' if @subscript
+        styles << '<w:vertAlign w:val="superscript" />' if @superscript
+        styles << %{<w:color w:val="#{@color}" />} if @color
+        styles << %{<w:highlight w:val="#{@highlight}" />} if @highlight
         if styles.any?
           "<w:rPr>#{styles.join}</w:rPr>"
         else
@@ -126,19 +138,45 @@ XML
       end
 
       def self.default
-        @default ||= new(false, false, false)
+        @default ||= new(false, false, false, false, false, false, false)
       end
 
       def with_bold
-        TextFormat.new(true, @italic, @underline)
+        TextFormat.new(true, @italic, @underline, @subscript,
+                       @superscript, @color, @highlight)
       end
 
       def with_italic
-        TextFormat.new(@bold, true, @underline)
+        TextFormat.new(@bold, true, @underline, @subscript,
+                       @superscript, @color, @highlight)
       end
 
       def with_underline
-        TextFormat.new(@bold, @italic, true)
+        TextFormat.new(@bold, @italic, true, @subscript,
+                       @superscript, @color, @highlight)
+      end
+
+      def with_subscript
+        TextFormat.new(@bold, @italic, @underline, true,
+                       @superscript, @color, @highlight)
+      end
+
+      def with_superscript
+        TextFormat.new(@bold, @italic, @underline, @subscript,
+                       true, @color, @highlight)
+      end
+
+      def set_color color
+        @color = color.to_s
+      end
+
+      def set_highlight highlight
+        @highlight = highlight.to_s
+      end
+
+      def clear_color
+        @color = false
+        @highlight = false
       end
     end
 

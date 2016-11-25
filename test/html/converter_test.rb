@@ -402,4 +402,49 @@ class HTMLConverterASTTest < Sablon::TestCase
     assert_equal [1001], list_p.map(&:numid).uniq
     assert_equal [0, 1, 2, 1, 0, 1, 2], list_p.map(&:ilvl)
   end
+
+  def test_all
+    input = <<-HTML
+<div>
+    <p>
+      <u>sdasdsasdasd</u>
+      <u> I dont know the sum C</u><sub>x</sub>H<sub>y d</sub>
+    </p>
+    <ol>
+        <li>123123</li>
+        <li>23</li>
+    </ol>
+    <p>
+        <br>
+    </p>
+    <p>zuizuizuizuizui</p>
+    <p>
+        <br>
+    </p>
+    <ul>
+        <li>abc</li>
+        <li>def</li>
+    </ul>
+    <p>
+      <strong><em>This is italic </em>asdasd, and this is blod text</strong>
+    </p>
+    <p><sub>asd</sub>a</p>
+    <p><br></p>
+    <p>
+      <span style="background-color: #0066CC;">Test background color</span>
+    </p>
+    <p><br></p>
+    <p>Inserted text</p>
+    <p>
+      <span style="color: #DE1BD7">asdasdasd</span>
+    </p>
+    <p>
+      <span style="color: #008A00; background-color: #000000">asdasdasd</span>
+    </p>
+</div>
+HTML
+    ast = @converter.processed_ast(input)
+    list_p = ast.grep(Sablon::HTMLConverter::ListParagraph)
+  end
+
 end
