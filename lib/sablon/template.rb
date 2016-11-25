@@ -25,6 +25,7 @@ module Sablon
       Zip::OutputStream.write_buffer(StringIO.new) do |out|
         Sablon::Processor::Image.add_images_to_zip!(context, out)
         Zip::File.open(@path).each do |entry|
+          next if entry.directory?
           entry_name = entry.name
           out.put_next_entry(entry_name)
           content = entry.get_input_stream.read

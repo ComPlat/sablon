@@ -98,13 +98,13 @@ module Sablon
       elsif node.name == 'ul'
         @builder.new_layer ilvl: true
         unless @builder.nested?
-          @definition = Sablon::Numbering.instance.register('ListBullet')
+          @definition = Sablon::Numbering.instance.register('ListParagraph')
         end
         @builder.push_all(node.children)
       elsif node.name == 'ol'
         @builder.new_layer ilvl: true
         unless @builder.nested?
-          @definition = Sablon::Numbering.instance.register('ListNumber')
+          @definition = Sablon::Numbering.instance.register('ListParagraph')
         end
         @builder.push_all(node.children)
       elsif node.name == 'li'
@@ -117,26 +117,70 @@ module Sablon
       end
     end
 
+    def get_highlight_from_hex hex
+      hex = hex.to_i(16)
+
+      return "black" if hex.between?(0x000000, 0x000080)
+      return "darkblue" if hex.between?(0x000080, 0x0000FF)
+      return "blue" if hex.between?(0x0000FF, 0x008000)
+      return "darkGreen" if hex.between?(0x008000, 0x008080)
+      return "darkCyan" if hex.between?(0x008080, 0x00FF00)
+      return "green" if hex.between?(0x00FF00, 0x00FFFF)
+      return "cyan" if hex.between?(0x00FFFF, 0x800000)
+      return "darkRed" if hex.between?(0x800000, 0x800080)
+      return "darkMagenta" if hex.between?(0x800080, 0x808000)
+      return "darkYellow" if hex.between?(0x808000, 0x808080)
+      return "darkGray" if hex.between?(0x808080, 0xC0C0C0)
+      return "lightGray" if hex.between?(0xC0C0C0, 0xFF0000)
+      return "red" if hex.between?(0xFF0000, 0xFF00FF)
+      return "magenta" if hex.between?(0xFF00FF, 0xFFFF00)
+      return "yello" if hex.between?(0xFFFF00, 0xFFFFFF)
+      return "white"
+    end
+
     def ast_text(nodes, format: TextFormat.default)
       runs = nodes.flat_map do |node|
+        node_format = format.clone
+        if node.attributes.count > 0
+          styles = node.attr("style").split(";").compact
+          styles.each do |style|
+            style_attr = style.split(":").compact.collect(&:strip)
+            hex_color = style_attr[1].delete "#; "
+            case style_attr[0]
+            when 'color'
+              node_format.set_color hex_color
+            when 'background-color'
+              node_format.set_highlight(get_highlight_from_hex(hex_color))
+            end
+          end
+        end
+
         if node.text?
-          Text.new(node.text, format)
+          Text.new(node.text, node_format)
         elsif node.name == 'br'
           Newline.new
         elsif node.name == 'strong' || node.name == 'b'
-          ast_text(node.children, format: format.with_bold).nodes
+          ast_text(node.children, format: node_format.with_bold).nodes
         elsif node.name == 'em' || node.name == 'i'
-          ast_text(node.children, format: format.with_italic).nodes
+          ast_text(node.children, format: node_format.with_italic).nodes
         elsif node.name == 'u'
-          ast_text(node.children, format: format.with_underline).nodes
-        elsif ['ul', 'ol', 'p', 'div'].include?(node.name)
+          ast_text(node.children, format: node_format.with_underline).nodes
+        elsif node.name == 'sub'
+          ast_text(node.children, format: node_format.with_subscript).nodes
+        elsif node.name == 'sup'
+          ast_text(node.children, format: node_format.with_superscript).nodes
+        elsif node.name == 'span'
+          ast_text(node.children, format: node_format).nodes
+        elsif ['ul', 'ol', 'p', 'div'].include?(node.name) ||
+              (node.name =~ /h(\d+)/) != nil
           @builder.push(node)
           nil
         else
           raise ArgumentError, "Don't know how to handle node: #{node.inspect}"
         end
       end
-      Collection.new(runs.compact)
+
+      return Collection.new(runs.compact)
     end
   end
 end

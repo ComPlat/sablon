@@ -14,7 +14,7 @@ module Sablon
     end
 
     def reset!
-      @numid = 1000
+      @numid = 0
       @definitions = []
     end
 
