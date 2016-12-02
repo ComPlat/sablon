@@ -5,6 +5,8 @@ require 'nokogiri'
 require "sablon/version"
 require "sablon/numbering"
 require "sablon/image"
+require "sablon/ole"
+require "sablon/ole_img"
 require "sablon/context"
 require "sablon/template"
 require "sablon/processor/document"
