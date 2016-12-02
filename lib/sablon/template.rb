@@ -24,6 +24,7 @@ module Sablon
       Zip.sort_entries = true # required to process document.xml before numbering.xml
       Zip::OutputStream.write_buffer(StringIO.new) do |out|
         Sablon::Processor::Image.add_images_to_zip!(context, out)
+        Sablon::Processor::Chem.add_chems_to_zip!(context, out)
         Zip::File.open(@path).each do |entry|
           next if entry.directory?
           entry_name = entry.name
@@ -37,7 +38,8 @@ module Sablon
           elsif entry_name == 'word/numbering.xml'
             out.write(process(Processor::Numbering, content))
           elsif entry_name == 'word/_rels/document.xml.rels'
-            out.write(process(Processor::Image, content, properties, out))
+            tmp_out = process(Processor::Image, content, properties, out)
+            out.write(process(Processor::Chem, tmp_out, properties, out))
           else
             out.write(content)
           end

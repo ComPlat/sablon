@@ -57,6 +57,13 @@ module Sablon
         block.replace([image])
       end
     end
+
+    class Chem < Struct.new(:chem_reference, :block)
+      def evaluate(context)
+        chem = chem_reference.evaluate(context)
+        block.replace([chem])
+      end
+    end
   end
 
   module Expression

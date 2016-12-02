@@ -51,7 +51,7 @@ module Sablon
 
       class Block < Struct.new(:start_field, :end_field)
         def self.enclosed_by(start_field, end_field)
-          @blocks ||= [ImageBlock, RowBlock, ParagraphBlock, InlineParagraphBlock]
+          @blocks ||= [ChemBlock, ImageBlock, RowBlock, ParagraphBlock, InlineParagraphBlock]
           block_class = @blocks.detect { |klass| klass.encloses?(start_field, end_field) }
           block_class.new start_field, end_field
         end
@@ -134,6 +134,43 @@ module Sablon
         end
       end
 
+      class ChemBlock < ParagraphBlock
+        attr_reader :sid
+        def self.encloses?(start_field, end_field)
+          start_field.expression =~ /^\$\$/
+        end
+
+        def replace(content)
+          replace_img(content)
+          replace_shape
+          replace_ole(content)
+
+          start_field.remove
+          end_field.remove
+        end
+
+        def replace_img(content)
+          img_name = content.first.img.name
+          img_new_rid = Sablon::Processor::Image.list_ids[img_name.match(/(.*)\.[^.]+$/)[1]]
+          img = self.class.parent(start_field).at_xpath('.//v:imagedata')
+          img.attributes['id'].value = "rId#{img_new_rid}"
+          @sid = img_new_rid
+        end
+
+        def replace_shape
+          shape = self.class.parent(start_field).at_xpath('.//v:shape')
+          shape.attributes['id'].value = "id_s#{sid}"
+        end
+
+        def replace_ole(content)
+          ole_name = content.first.ole.name
+          ole_new_rid = Sablon::Processor::Chem.list_ole_ids[ole_name.match(/(.*)\.[^.]+$/)[1]]
+          ole = self.class.parent(start_field).at_xpath('.//o:OLEObject')
+          ole.attributes['id'].value = "rId#{ole_new_rid}"
+          ole.attributes['ShapeID'].value = "id_s#{sid}"
+        end
+      end
+
       class InlineParagraphBlock < Block
         def self.parent(node)
           node.ancestors ".//w:p"
@@ -194,6 +231,9 @@ module Sablon
           when /^@([^ ]+):start/
             block = consume_block("@#{$1}:end")
             Statement::Image.new(Expression.parse($1), block)
+          when /^\$\$([^ ]+):start/
+            block = consume_block("$$#{$1}:end")
+            Statement::Chem.new(Expression.parse($1), block)
           end
         end
 
