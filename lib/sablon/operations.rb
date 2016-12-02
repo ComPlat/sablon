@@ -57,6 +57,13 @@ module Sablon
         block.replace([image])
       end
     end
+
+    class OleImg < Struct.new(:ole_img_reference, :block)
+      def evaluate(context)
+        ole_img = ole_img_reference.evaluate(context)
+        block.replace([ole_img])
+      end
+    end
   end
 
   module Expression
