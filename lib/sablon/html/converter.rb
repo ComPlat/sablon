@@ -167,7 +167,7 @@ module Sablon
           ast_text(node.children, format: node_format.with_underline).nodes
         elsif node.name == 'sub'
           ast_text(node.children, format: node_format.with_subscript).nodes
-        elsif node.name == 'sup'
+        elsif node.name == 'sup' || node.name == 'super'
           ast_text(node.children, format: node_format.with_superscript).nodes
         elsif node.name == 'span'
           ast_text(node.children, format: node_format).nodes
