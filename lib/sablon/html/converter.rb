@@ -146,11 +146,14 @@ module Sablon
           styles.each do |style|
             style_attr = style.split(":").compact.collect(&:strip)
             hex_color = style_attr[1].delete "#; "
+            font_family = style_attr[1]
             case style_attr[0]
             when 'color'
               node_format.set_color hex_color
             when 'background-color'
               node_format.set_highlight(get_highlight_from_hex(hex_color))
+            when 'font-family'
+              node_format.set_font_family(font_family)
             end
           end
         end

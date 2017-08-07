@@ -295,6 +295,56 @@ DOCX
     assert_equal [Sablon::Numbering::Definition.new(1001, 'ListBullet')], Sablon::Numbering.instance.definitions
   end
 
+  def test_font_family
+    font_family = "Times New Roman"
+    html = <<-HTML
+<div>
+  <p>
+    <span style="font-family: #{font_family}">
+      The reaction has been conducted in dry glass
+    </span>
+  </p>
+</div>
+HTML
+
+    expected_output = <<-DOCX.strip
+<w:p>
+  <w:pPr>
+    <w:pStyle w:val="Normal" />
+  </w:pPr>
+  <w:r>
+    <w:t xml:space="preserve"></w:t>
+  </w:r>
+  <w:r>
+    <w:t xml:space="preserve"></w:t>
+  </w:r>
+</w:p>
+<w:p>
+  <w:pPr>
+    <w:pStyle w:val="Paragraph" />
+  </w:pPr>
+  <w:r>
+    <w:t xml:space="preserve"></w:t>
+  </w:r>
+  <w:r>
+    <w:rPr>
+      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
+    </w:rPr>
+    <w:t xml:space="preserve">
+      The reaction has been conducted in dry glass
+    </w:t>
+  </w:r>
+  <w:r>
+    <w:t xml:space="preserve"></w:t>
+  </w:r>
+</w:p>
+DOCX
+
+    real_output = @converter.process(html)
+    assert_equal normalize_wordml(expected_output), normalize_wordml(real_output)
+    assert real_output.include?(font_family)
+  end
+
   private
   def normalize_wordml(wordml)
     wordml.gsub(/^\s+/, '').tr("\n", '')
