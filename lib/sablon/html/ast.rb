@@ -99,7 +99,7 @@ XML
     end
 
     class TextFormat
-      def initialize(bold, italic, underline, subscript, superscript, color, highlight, font_family)
+      def initialize(bold, italic, underline, subscript, superscript, color, highlight, font_family, font_size)
         @bold = bold
         @italic = italic
         @underline = underline
@@ -108,6 +108,7 @@ XML
         @color = color
         @highlight = highlight
         @font_family = font_family
+        @font_size = font_size
       end
 
       def inspect
@@ -120,6 +121,7 @@ XML
         parts << "color #{@color}" if @color
         parts << "highlight #{@highlight}" if @highlight
         parts << "font_family #{@font_family}" if @font_family
+        parts << "font_size #{@font_size}" if @font_size
         parts.join('|')
       end
 
@@ -133,6 +135,7 @@ XML
         styles << %{<w:color w:val="#{@color}" />} if @color
         styles << %{<w:highlight w:val="#{@highlight}" />} if @highlight
         styles << %{<w:rFonts w:ascii="#{@font_family}" w:hAnsi="#{@font_family}" w:cs="#{@font_family}"/>} if @font_family
+        styles << %{<w:sz w:val="#{@font_size}"/><w:szCs w:val="#{@font_size}"/>} if @font_size
         if styles.any?
           "<w:rPr>#{styles.join}</w:rPr>"
         else
@@ -141,32 +144,32 @@ XML
       end
 
       def self.default
-        @default ||= new(false, false, false, false, false, false, false, false)
+        @default ||= new(false, false, false, false, false, false, false, false, false)
       end
 
       def with_bold
         TextFormat.new(true, @italic, @underline, @subscript,
-                       @superscript, @color, @highlight, @font_family)
+                       @superscript, @color, @highlight, @font_family, @font_size)
       end
 
       def with_italic
         TextFormat.new(@bold, true, @underline, @subscript,
-                       @superscript, @color, @highlight, @font_family)
+                       @superscript, @color, @highlight, @font_family, @font_size)
       end
 
       def with_underline
         TextFormat.new(@bold, @italic, true, @subscript,
-                       @superscript, @color, @highlight, @font_family)
+                       @superscript, @color, @highlight, @font_family, @font_size)
       end
 
       def with_subscript
         TextFormat.new(@bold, @italic, @underline, true,
-                       @superscript, @color, @highlight, @font_family)
+                       @superscript, @color, @highlight, @font_family, @font_size)
       end
 
       def with_superscript
         TextFormat.new(@bold, @italic, @underline, @subscript,
-                       true, @color, @highlight, @font_family)
+                       true, @color, @highlight, @font_family, @font_size)
       end
 
       def set_color color
@@ -179,6 +182,10 @@ XML
 
       def set_font_family font_family
         @font_family = font_family.to_s
+      end
+
+      def set_font_size font_size
+        @font_size = font_size.to_s
       end
 
       def clear_color
