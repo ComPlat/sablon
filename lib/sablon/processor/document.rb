@@ -2,6 +2,7 @@
 module Sablon
   module Processor
     class Document
+      UNIT_CONV = 3000
       def self.process(xml_node, context, properties = {})
         processor = new(parser)
         processor.manipulate xml_node, Sablon::Context.transform(context)
@@ -129,8 +130,25 @@ module Sablon
           blip = self.class.parent(start_field).at_xpath('.//a:blip', a: Sablon::Processor::Image::MAIN_NS_URI)
           new_rid = Sablon::Processor::Image.list_ids[name.match(/(.*)\.[^.]+$/)[1]]
           blip.attributes['embed'].value = "rId#{new_rid}"
+
+          use_original_image_size(content)
+
           start_field.remove
           end_field.remove
+        end
+
+        def use_original_image_size(content)
+          byebug
+          return if content.first.width.nil? || content.first.height.nil?
+          width = (content.first.width * UNIT_CONV).to_s
+          height = (content.first.height * UNIT_CONV).to_s
+
+          dim_prop = self.class.parent(start_field).at_xpath('.//wp:extent')
+          dim_prop.attributes['cx'].value = width
+          dim_prop.attributes['cy'].value = height
+          aext_prop = self.class.parent(start_field).at_xpath('.//a:xfrm', a: Sablon::Processor::Image::MAIN_NS_URI)
+          aext_prop.children[1].attributes['cx'].value = width
+          aext_prop.children[1].attributes['cy'].value = height
         end
       end
 

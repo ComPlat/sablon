@@ -3,9 +3,9 @@ module Sablon
     include Singleton
     attr_reader :definitions
 
-    Definition = Struct.new(:name, :data, :rid) do
+    Definition = Struct.new(:name, :data, :width, :height, :rid) do
       def inspect
-        "#<Image #{name}:#{data}:#{rid}"
+        "#<Image #{name}:#{data}:#{width}:#{height}:#{rid}"
       end
     end
 
