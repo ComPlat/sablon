@@ -138,7 +138,6 @@ module Sablon
         end
 
         def use_original_image_size(content)
-          byebug
           return if content.first.width.nil? || content.first.height.nil?
           width = (content.first.width * UNIT_CONV).to_s
           height = (content.first.height * UNIT_CONV).to_s
