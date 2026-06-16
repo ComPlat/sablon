@@ -5,7 +5,7 @@ module Sablon
         attr_accessor :start_field, :end_field
 
         def self.enclosed_by(start_field, end_field)
-          @blocks ||= [ImageBlock, RowBlock, ParagraphBlock, InlineParagraphBlock]
+          @blocks ||= [ChemBlock, ImageBlock, RowBlock, ParagraphBlock, InlineParagraphBlock]
           block_class = @blocks.detect { |klass| klass.encloses?(start_field, end_field) }
           block_class.new start_field, end_field
         end
@@ -122,6 +122,55 @@ module Sablon
           #
           start_field.remove
           end_field.remove
+        end
+      end
+
+      # Handles insertion of a chem object (an embedded OLE document plus a
+      # preview image) wrapped in `$$expr:start` / `$$expr:end` merge fields.
+      # The template must contain a placeholder VML object built from a
+      # `<v:shape>` (with a child `<v:imagedata>`) and an `<o:OLEObject>`.
+      # Only the relationship ids and the shape id are rewritten so the
+      # placeholder's geometry/styling is preserved.
+      class ChemBlock < Block
+        VML_NS = 'urn:schemas-microsoft-com:vml'.freeze
+        OFFICE_NS = 'urn:schemas-microsoft-com:office:office'.freeze
+
+        def self.encloses?(start_field, end_field)
+          start_field.expression.start_with?('$$')
+        end
+
+        def replace(chem)
+          if chem
+            # start_node and end_node are identical for an inline (single
+            # paragraph) chem field, so de-duplicate to avoid reprocessing.
+            nodes = ([start_node] + body + [end_node]).uniq
+            nodes.each { |node| rewrite_vml(node, chem) }
+          end
+          #
+          start_field.remove
+          end_field.remove
+        end
+
+        private
+
+        def rewrite_vml(node, chem)
+          imagedata = node.at_xpath('.//v:imagedata', v: VML_NS)
+          return unless imagedata
+
+          shape = node.at_xpath('.//v:shape', v: VML_NS)
+          ole = node.at_xpath('.//o:OLEObject', o: OFFICE_NS)
+
+          # r:id (local-name "id") of the preview image points at the media rel
+          imagedata.attributes['id'].value = chem.img.rid if chem.img.rid
+
+          # keep the shape id and the OLEObject's ShapeID consistent
+          shape_id = "id_s#{chem.img.rid.to_s[/\d+/]}"
+          shape.attributes['id'].value = shape_id if shape
+
+          if ole
+            ole.attributes['id'].value = chem.ole.rid if chem.ole.rid
+            ole.attributes['ShapeID'].value = shape_id
+          end
         end
       end
 
