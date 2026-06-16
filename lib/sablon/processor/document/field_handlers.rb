@@ -101,6 +101,20 @@ module Sablon
         end
       end
 
+      # Handles chem (OLE object + preview image) insertion fields of the
+      # form `$$expr:start` ... `$$expr:end`.
+      class ChemHandler < FieldHandler
+        def initialize
+          super(/^\$\$([^ ]+):start/)
+        end
+
+        def build_statement(constructor, field, _options = {})
+          expr_name = field.expression.match(@pattern).to_a[1]
+          block = constructor.consume_block("$$#{expr_name}:end")
+          Statement::Chem.new(Expression.parse(expr_name), block)
+        end
+      end
+
       # Handles comment blocks in the template
       class CommentHandler < FieldHandler
         def initialize
