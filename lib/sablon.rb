@@ -4,6 +4,9 @@ require 'nokogiri'
 require "sablon/version"
 require "sablon/configuration/configuration"
 
+require "sablon/image"
+require "sablon/ole"
+require "sablon/chem"
 require "sablon/context"
 require "sablon/environment"
 require "sablon/template"

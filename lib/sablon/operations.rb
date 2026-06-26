@@ -151,6 +151,59 @@ module Sablon
         image.local_rid = image.rid_by_file[env.document.current_entry]
       end
     end
+
+    # Inserts a chem object: an embedded OLE document (e.g. a ChemDraw file)
+    # together with its preview image. The preview is added to word/media as
+    # a normal image relationship while the OLE payload is added to
+    # word/embeddings with an oleObject relationship and content type.
+    class Chem < Struct.new(:chem_reference, :block)
+      IMAGE_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'.freeze
+      OLE_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject'.freeze
+      OLE_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.oleObject'.freeze
+
+      def evaluate(env)
+        chem = chem_reference.evaluate(env.context)
+        add_relationships(env, chem) if chem
+        block.replace(chem)
+      end
+
+      private
+
+      def add_relationships(env, chem)
+        chem.img.rid = add_preview_image(env, chem.img)
+        chem.ole.rid = add_embedding(env, chem.ole)
+      end
+
+      # Reuses the model's add_media helper to register the preview image,
+      # handling word/media placement, content type and the relationship.
+      def add_preview_image(env, img)
+        env.document.add_media(img.name, img.data, { Type: IMAGE_TYPE })
+      end
+
+      # Adds the OLE payload to word/embeddings, registers its content type
+      # and returns the new relationship id.
+      def add_embedding(env, ole)
+        ole.name = unique_embedding_name(env, ole.name)
+        target = "embeddings/#{ole.name}"
+        env.document.zip_contents["word/#{target}"] = ole.data
+        #
+        extension = File.extname(ole.name).delete('.')
+        extension = 'bin' if extension.empty?
+        env.document.add_content_type(extension, OLE_CONTENT_TYPE)
+        #
+        env.document.add_relationship(Type: OLE_TYPE, Target: target)
+      end
+
+      # Avoids clobbering an existing embedding with the same name by
+      # prefixing an incrementing counter, mirroring add_media's behaviour.
+      def unique_embedding_name(env, name)
+        return name unless env.document.zip_contents["word/embeddings/#{name}"]
+        #
+        counter = 1
+        counter += 1 while env.document.zip_contents["word/embeddings/#{counter}-#{name}"]
+        "#{counter}-#{name}"
+      end
+    end
   end
 
   module Expression
